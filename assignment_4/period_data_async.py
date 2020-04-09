@@ -17,6 +17,7 @@ import asyncio
 import aiohttp
 
 from subscription_key import FUND_DAILY_INFO_SUBSCRIPTION_KEY_AI_PRI, FUND_FACT_SHEET_SUBSCRIPTION_KEY_AI_PRI
+from period_data_config import data_configs
 
 
 def load_pickle(path):
@@ -199,79 +200,16 @@ async def download_all(proj_ids, date_range, pickle_path, url, subscription_key,
 
 
 def main():
-    FUND_DAILY_INFO_SUBSCRIPTION_KEY_AI_PRI = FUND_DAILY_INFO_SUBSCRIPTION_KEY_AI_PRI
-    FUND_FACT_SHEET_SUBSCRIPTION_KEY = FUND_FACT_SHEET_SUBSCRIPTION_KEY_AI_PRI
-
-    amc_project_df = pd.read_csv('amc_project.csv')
-
-    # am_filter = (amc_project_df.management_style == 'AM') & (
-    #     amc_project_df.fund_status == 'RG') & (amc_project_df.policy_desc == 'ตราสารทุน')
-    am_filter = (amc_project_df.management_style == 'AM') & (
-        amc_project_df.fund_status == 'RG')
-    # pm_filter = (amc_project_df.management_style == 'PM') & (
-    #     amc_project_df.fund_status == 'RG') & (amc_project_df.policy_desc == 'ตราสารทุน')
-    pm_filter = (amc_project_df.management_style == 'PM') & (
-        amc_project_df.fund_status == 'RG')
-
-    project_for_nav_df = amc_project_df.where(
-        am_filter | pm_filter).dropna().reset_index()
-    project_for_fund_full_port_df = amc_project_df.where(
-        am_filter).dropna().reset_index()
-    project_for_fund_top5_df = amc_project_df.where(
-        am_filter).dropna().reset_index()
-
-    PM_SET50_proj_ids = []
-
-    project_benchmark_dict = load_pickle('project_benchmark_dict.pickle')
-    amc_project_df = amc_project_df.set_index('project_id')
-
-    for key, value in tqdm(project_benchmark_dict.items()):
-        project_id = key
-        bm_list = value
-        amc = amc_project_df.loc[project_id]
-        policy_desc = amc['policy_desc']
-        fund_status = amc['fund_status']
-        management_style = amc['management_style']
-
-    #     if management_style == 'PM' and fund_status == 'RG' and policy_desc == 'ตราสารทุน':
-        if management_style == 'PM' and fund_status == 'RG':
-            for bm in bm_list:
-                if bm['benchmark'] == 'ดัชนีผลตอบแทนรวม SET 50 (SET50 TRI)':
-                    PM_SET50_proj_ids.append(project_id)
-                    break
-
-    amc_project_df = amc_project_df.reset_index()
-    del project_benchmark_dict
-
-    data_configs = [
-        # 01. NAV กองทุนรวมรายวัน
-        # (project_for_nav_df.iloc[:]['project_id'],
-        #  cal_date_range(), 'project_nav_dict2.pickle', 'https://api.sec.or.th/FundDailyInfo/{proj_id}/dailynav/{date}', FUND_DAILY_INFO_SUBSCRIPTION_KEY),
-        # 01. NAV กองทุนรวมรายวัน
-        # (project_for_nav_df['project_id'],
-        #  pd.date_range(start="2017-01-01", end="2020-04-01", freq='D').astype(str), 'project_nav_dict2.pickle', 'https://api.sec.or.th/FundDailyInfo/{proj_id}/dailynav/{date}', FUND_DAILY_INFO_SUBSCRIPTION_KEY),
-        # 01. NAV กองทุนรวมรายวัน
-        # (PM_SET50_proj_ids,
-        #  pd.date_range(start="2017-01-01", end="2020-04-01", freq='D').astype(str), 'project_nav_pm_dict.pickle', 'https://api.sec.or.th/FundDailyInfo/{proj_id}/dailynav/{date}', FUND_DAILY_INFO_SUBSCRIPTION_KEY_FAR_OFFICIAL_2_PRI),
-        # (['M0132_2557'],
-        #  pd.date_range(start="2017-01-01", end="2020-04-01", freq='D').astype(str), 'project_nav_pm_dict.pickle', 'https://api.sec.or.th/FundDailyInfo/{proj_id}/dailynav/{date}', FUND_DAILY_INFO_SUBSCRIPTION_KEY),
-        # 28. สัดส่วนของการลงทุนของกองทุนรวม
-        # (project_for_fund_full_port_df['project_id'], cal_month_range(),
-        #  'project_fund_full_port_dict.pickle', 'https://api.sec.or.th/FundFactsheet/fund/{proj_id}/FundFullPort/{date}', FUND_FACT_SHEET_SUBSCRIPTION_KEY),
-        # 29. หลักทรัพย์ 5 อันดับแรกที่ลงทุน
-        # (project_for_fund_top5_df['project_id'], cal_month_range(),
-        #  'project_fund_top5_dict.pickle', 'https://api.sec.or.th/FundFactsheet/fund/{proj_id}/FundTop5/{date}', FUND_FACT_SHEET_SUBSCRIPTION_KEY),
-    ]
 
     stopped = mp.Value(ctypes.c_bool, False)
 
     for config in data_configs:
-        proj_ids, date_range, pickle_path, url, subscription_key = config
+        proj_ids, date_range, pickle_path, url, subscription_keys = config
         if stopped.value is True:
             break
         print(pickle_path)
         asyncio.get_event_loop().run_until_complete(download_all(proj_ids, date_range, pickle_path,
-                                                                 url, subscription_key, stopped))
+                                                                 url, subscription_keys[0], stopped))
 
 
 if __name__ == "__main__":

@@ -17,7 +17,7 @@ import asyncio
 import aiohttp
 
 from subscription_key import fund_daily_subscription_keys, fund_fact_subscription_keys
-
+from period_data_config import data_configs
 
 def load_pickle(path):
     with open(path, 'rb') as pickle_file:
@@ -224,67 +224,6 @@ def setup_download_process(proj_ids, date_range, pickle_path, url, subscription_
 
 
 def main():
-
-    amc_project_df = pd.read_csv('amc_project.csv')
-
-    # am_filter = (amc_project_df.management_style == 'AM') & (
-    #     amc_project_df.fund_status == 'RG') & (amc_project_df.policy_desc == 'ตราสารทุน')
-    am_filter = (amc_project_df.management_style == 'AM') & (
-        amc_project_df.fund_status == 'RG')
-    # pm_filter = (amc_project_df.management_style == 'PM') & (
-    #     amc_project_df.fund_status == 'RG') & (amc_project_df.policy_desc == 'ตราสารทุน')
-    pm_filter = (amc_project_df.management_style == 'PM') & (
-        amc_project_df.fund_status == 'RG')
-
-    project_for_nav_df = amc_project_df.where(
-        am_filter).dropna().reset_index()
-    project_for_fund_full_port_df = amc_project_df.where(
-        am_filter).dropna().reset_index()
-    project_for_fund_top5_df = amc_project_df.where(
-        am_filter).dropna().reset_index()
-
-    PM_SET50_proj_ids = []
-
-    project_benchmark_dict = load_pickle('project_benchmark_dict.pickle')
-    amc_project_df = amc_project_df.set_index('project_id')
-
-    for key, value in project_benchmark_dict.items():
-        project_id = key
-        bm_list = value
-        amc = amc_project_df.loc[project_id]
-        policy_desc = amc['policy_desc']
-        fund_status = amc['fund_status']
-        management_style = amc['management_style']
-
-    #     if management_style == 'PM' and fund_status == 'RG' and policy_desc == 'ตราสารทุน':
-        if management_style == 'PM' and fund_status == 'RG':
-            for bm in bm_list:
-                if bm['benchmark'] == 'ดัชนีผลตอบแทนรวม SET 50 (SET50 TRI)':
-                    PM_SET50_proj_ids.append(project_id)
-                    break
-
-    amc_project_df = amc_project_df.reset_index()
-    del project_benchmark_dict
-
-    data_configs = [
-        # 01. NAV กองทุนรวมรายวัน
-        # (project_for_nav_df['project_id'],
-        #  cal_date_range(), 'project_nav_dict2.pickle', 'https://api.sec.or.th/FundDailyInfo/{proj_id}/dailynav/{date}', fund_daily_subscription_keys),
-        # 01. NAV กองทุนรวมรายวัน
-        # (project_for_nav_df['project_id'],
-        #  pd.date_range(start="2017-01-01", end="2020-04-01", freq='D').astype(str), 'project_nav_dict2.pickle', 'https://api.sec.or.th/FundDailyInfo/{proj_id}/dailynav/{date}', fund_daily_subscription_keys),
-        # (project_for_nav_df['project_id'],
-        #  pd.date_range(start="2020-01-01", end="2020-04-01", freq='D').astype(str), 'project_nav_dict2.pickle', 'https://api.sec.or.th/FundDailyInfo/{proj_id}/dailynav/{date}', fund_daily_subscription_keys),
-        # 01. NAV กองทุนรวมรายวัน
-        # (PM_SET50_proj_ids,
-        #  pd.date_range(start="2015-01-01", end="2020-04-01", freq='D').astype(str), 'project_nav_pm_dict.pickle', 'https://api.sec.or.th/FundDailyInfo/{proj_id}/dailynav/{date}', fund_daily_subscription_keys),
-        # 28. สัดส่วนของการลงทุนของกองทุนรวม
-        # (project_for_fund_full_port_df['project_id'], cal_month_range(),
-        #  'project_fund_full_port_dict2.pickle', 'https://api.sec.or.th/FundFactsheet/fund/{proj_id}/FundFullPort/{date}', fund_fact_subscription_keys),
-        # 29. หลักทรัพย์ 5 อันดับแรกที่ลงทุน
-        # (project_for_fund_top5_df['project_id'], cal_month_range(),
-        #  'project_fund_top5_dict2.pickle', 'https://api.sec.or.th/FundFactsheet/fund/{proj_id}/FundTop5/{date}', FUND_FACT_SHEET_SUBSCRIPTION_KEY),
-    ]
 
     stopped = mp.Value(ctypes.c_bool, False)
 

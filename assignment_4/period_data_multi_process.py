@@ -12,8 +12,8 @@ import sys
 import os
 import math
 
-FUND_FACT_SHEET_SUBSCRIPTION_KEY = '886c69c66f8f4f2b9159a2877cb4dca4'
-FUND_DAILY_INFO_SUBSCRIPTION_KEY = 'f95b4cdf3e884009b09c8b25d1900faf'
+from subscription_key import FUND_DAILY_INFO_SUBSCRIPTION_KEY_AI_PRI, FUND_FACT_SHEET_SUBSCRIPTION_KEY_AI_PRI
+from period_data_config import data_configs
 
 
 def download_process(proc_num, df, url, subscription_key, queue, stopped, tqdm_lock):
@@ -156,51 +156,16 @@ def download_data(proj_ids, date_range, pickle_path, url, subscription_key, stop
 
 
 def main():
-    FUND_FACT_SHEET_SUBSCRIPTION_KEY = '886c69c66f8f4f2b9159a2877cb4dca4'
-    FUND_DAILY_INFO_SUBSCRIPTION_KEY = 'f95b4cdf3e884009b09c8b25d1900faf'
-
-    amc_project_df = pd.read_csv('amc_project.csv')
-
-    # am_filter = (amc_project_df.management_style == 'AM') & (
-    #     amc_project_df.fund_status == 'RG') & (amc_project_df.policy_desc == 'ตราสารทุน')
-    am_filter = (amc_project_df.management_style == 'AM') & (
-        amc_project_df.fund_status == 'RG')
-    # pm_filter = (amc_project_df.management_style == 'PM') & (
-    #     amc_project_df.fund_status == 'RG') & (amc_project_df.policy_desc == 'ตราสารทุน')
-    pm_filter = (amc_project_df.management_style == 'PM') & (
-        amc_project_df.fund_status == 'RG')
-
-    project_for_nav_df = amc_project_df.where(
-        am_filter | pm_filter).dropna().reset_index()
-    project_for_fund_full_port_df = amc_project_df.where(
-        am_filter).dropna().reset_index()
-    project_for_fund_top5_df = amc_project_df.where(
-        am_filter).dropna().reset_index()
-
-    data_configs = [
-        # 01. NAV กองทุนรวมรายวัน
-        # (project_for_nav_df['project_id'],
-        #  cal_date_range(), 'project_nav_dict.pickle', 'https://api.sec.or.th/FundDailyInfo/{proj_id}/dailynav/{date}', FUND_DAILY_INFO_SUBSCRIPTION_KEY),
-        # 01. NAV กองทุนรวมรายวัน
-        # (project_for_nav_df['project_id'],
-        #  pd.date_range(start="2017-01-01", end="2020-04-01", freq='D').astype(str), 'project_nav_dict.pickle', 'https://api.sec.or.th/FundDailyInfo/{proj_id}/dailynav/{date}', FUND_DAILY_INFO_SUBSCRIPTION_KEY),
-        # 28. สัดส่วนของการลงทุนของกองทุนรวม
-        # (project_for_fund_full_port_df['project_id'], cal_month_range(),
-        #  'project_fund_full_port_dict.pickle', 'https://api.sec.or.th/FundFactsheet/fund/{proj_id}/FundFullPort/{date}', FUND_FACT_SHEET_SUBSCRIPTION_KEY),
-        # 29. หลักทรัพย์ 5 อันดับแรกที่ลงทุน
-        # (project_for_fund_top5_df['project_id'], cal_month_range(),
-        #  'project_fund_top5_dict.pickle', 'https://api.sec.or.th/FundFactsheet/fund/{proj_id}/FundTop5/{date}', FUND_FACT_SHEET_SUBSCRIPTION_KEY),
-    ]
 
     stopped = mp.Value(ctypes.c_bool, False)
 
     for config in data_configs:
-        proj_ids, date_range, pickle_path, url, subscription_key = config
+        proj_ids, date_range, pickle_path, url, subscription_keys = config
         if stopped.value is True:
             break
         print(pickle_path)
         download_data(proj_ids, date_range, pickle_path,
-                      url, subscription_key, stopped)
+                      url, subscription_keys[0], stopped)
 
 
 if __name__ == "__main__":
