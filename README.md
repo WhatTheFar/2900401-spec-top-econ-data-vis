@@ -41,8 +41,11 @@ jupyter contrib nbextension install
 # autopep8
 jupyter nbextension enable code_prettify/autopep8
 
+# nbdime
+pip install --upgrade nbdime
+
 # vim_binding
-cd $(jupyter --data-dir)/nbextensions
+cd $PYENV_ROOT/versions/miniconda3-4.3.30/envs/spec-top-econ-data-vis/share/jupyter/nbextensions
 git clone https://github.com/lambdalisue/jupyter-vim-binding vim_binding
 jupyter nbextension enable vim_binding/vim_binding
 ```
